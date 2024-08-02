@@ -4,7 +4,7 @@ use oxide_auth::primitives::grant::Grant;
 use oxide_auth_async::{
     endpoint::{
         Endpoint, access_token::AccessTokenFlow, authorization::AuthorizationFlow,
-        resource::ResourceFlow, refresh::RefreshFlow,
+        resource::ResourceFlow, client_credentials::ClientCredentialsFlow, refresh::RefreshFlow,
     },
 };
 
@@ -44,6 +44,27 @@ impl OAuthOperation for Token {
         WebError: From<E::Error>,
     {
         AccessTokenFlow::prepare(endpoint)?
+            .execute(self.0)
+            .await
+            .map_err(WebError::from)
+    }
+}
+
+/// Client Credentials related operations
+pub struct ClientCredentials(pub OAuthRequest);
+
+#[async_trait]
+impl OAuthOperation for ClientCredentials {
+    type Item = OAuthResponse;
+    type Error = WebError;
+
+    async fn run<E>(self, endpoint: E) -> Result<Self::Item, Self::Error>
+    where
+        E: Endpoint<OAuthRequest> + Send + Sync,
+        E::Error: Send,
+        WebError: From<E::Error>,
+    {
+        ClientCredentialsFlow::prepare(endpoint)?
             .execute(self.0)
             .await
             .map_err(WebError::from)
